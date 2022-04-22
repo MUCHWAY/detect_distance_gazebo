@@ -91,7 +91,7 @@ target_link_libraries(myplugins nvinfer cudart)
 
 add_library(sort src/sort.cpp src/Hungarian.cpp src/KalmanTracker.cpp)
 
-cuda_add_executable(yolov5_detect src/calibrator.cpp src/yolov5_detect_4k.cpp src/preprocess.cu src/video.cpp)
+cuda_add_executable(yolov5_detect src/calibrator.cpp src/yolov5_detect_1024.cpp src/preprocess.cu src/video.cpp)
 
 target_link_libraries(yolov5_detect nvinfer)
 target_link_libraries(yolov5_detect cudart)

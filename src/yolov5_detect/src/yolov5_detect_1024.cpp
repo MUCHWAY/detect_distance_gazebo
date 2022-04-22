@@ -135,7 +135,7 @@ int main(int argc, char** argv) {
     // prepare input data cache in device memory
     CUDA_CHECK(cudaMalloc((void**)&img_device, MAX_IMAGE_INPUT_SIZE_THRESH * 3));
         
-    cv::namedWindow("Display");
+    // cv::namedWindow("Display");
     cv::VideoWriter outputVideo;
     outputVideo.open( video_out_path + "detect.avi",  cv::VideoWriter::fourcc('M', 'P', '4', '2'), 10.0, cv::Size(1024, 1024));
     bool write = false;
@@ -289,7 +289,7 @@ int main(int argc, char** argv) {
         cout<<"--------------------------"<<endl;
     }
     outputVideo.release();
-    cv::destroyWindow("Display");
+    // cv::destroyWindow("Display");
     // img_update_thread.join();
 
     // Release stream and buffers

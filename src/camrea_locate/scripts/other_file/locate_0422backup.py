@@ -38,6 +38,7 @@ class DelayedQueue:
             self.datas.pop(0)
 
 class Watchdog():
+
     def __init__(self,delay=0.5,callback=None):
         self.callback=callback
         self.delay=delay
@@ -121,10 +122,11 @@ class Detect_Grtk():
         # rospy.spin()
 
     def local_pose_sub(self,msg):
-        # self.uav_pos = [msg.pose.position.x, msg.pose.position.y, msg.pose.position.z]
-        self.uav_pos_queue.push([msg.pose.position.x, msg.pose.position.y, msg.pose.position.z])
+        pos = [msg.pose.position.x, msg.pose.position.y, msg.pose.position.z]
+        self.uav_pos_queue.push(pos)
         
     def uav_attitude_sub(self,msg):
+        # print(msg)
         # self.uav_attitude[0] = msg.attitude[0]*57.3
         # self.uav_attitude[1] = msg.attitude[1]*57.3
         # self.uav_attitude[2] = ((-1 * msg.attitude[2]*57.3) + 90 + 360) % 360
@@ -145,7 +147,6 @@ class Detect_Grtk():
             p = [self.uav_pos[0], self.uav_pos[1], self.uav_pos[2], self.uav_attitude[2], self.uav_attitude[1], self.uav_attitude[0]]
             camera_pose=self.cam_pos.getCameraPose(p, self.camera_pitch)
             targets=[]
-
             for i in range(len(data.num)):
                 d = []
                 d.append(float(data.box_x[i]))
@@ -193,6 +194,7 @@ class Detect_Grtk():
         data = uav + " " + det + " " + c_w + " " + c_w2 + " " + car + " " + attitude + "\n"
 
         # print(data)
+        
         #data+=(1024-len(data.encode('utf-8')))*' '
         #self.udp_socket.sendto(data.encode('utf-8'), self.dest_addr)
 
@@ -211,7 +213,19 @@ class Detect_Grtk():
         pos[2] = -1 * (start[2] - end[2])
         return pos
         
+
+def parse_args():
+    desc = 'save data'
+    parser = argparse.ArgumentParser(description=desc)
+    parser.add_argument('--save', dest='save',
+                        help='0 or 1',
+                        default = 0, type=int)
+    args = parser.parse_args()
+    return args
+
+
 if __name__ == "__main__":
+    # args = parse_args()
     rospy.init_node("locate_node", anonymous=True)
     ID = rospy.get_param('~ID', default='1')
 
