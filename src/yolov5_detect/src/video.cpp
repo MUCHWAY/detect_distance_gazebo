@@ -4,6 +4,7 @@ std::mutex m;
 Ros_image::Ros_image(string &topic, const int &n) {
     img_topic = topic;
     topic_num = n;
+    update = 30;
 }
 
 void Ros_image::img_callback(const sensor_msgs::ImageConstPtr &msg)
@@ -11,7 +12,8 @@ void Ros_image::img_callback(const sensor_msgs::ImageConstPtr &msg)
   try
   {
     img = cv_bridge::toCvShare(msg, "bgr8")->image;
-    update = true;
+    update = 0;
+    if(update > 30) update = 30;
     // cv::imshow("view", img);
     // cv::waitKey(1);
   }
@@ -79,8 +81,8 @@ Img_split_focus::Img_split_focus(int width, int height){
 
     // x_num=(int)(img_size[0]/split_size[0])+1;
     // y_num=(int)(img_size[1]/split_size[1])+1;
-    x_num = 4;
-    y_num = 2;
+    x_num = 2;
+    y_num = 1;
 
     cout<<"x_num: "<<x_num<<endl;
     cout<<"y_num: "<<y_num<<endl;
@@ -104,11 +106,12 @@ Img_split_focus::Img_split_focus(int width, int height){
     // // overlap[1]=(float)(split_size[1]-split_y[1])/split_size[1];
     // cout<<"overlap_x: "<<abs(overlap[0])<<" overlap_y:"<<abs(overlap[1])<<endl;
 
-    overlap[0] = 90; overlap[1] = 50;
+    overlap[0] = 128; overlap[1] = 50;
     for(i=1; i<x_num; i++){
         split_x.push_back(split_x[i - 1] + split_size[0] - overlap[0]);
         cout<<split_x[i]<<endl;
     }
+
     for(i = 1; i < y_num; i ++){
         split_y.push_back(split_y[i - 1] + split_size[1] - overlap[1]);
         cout<<split_y[i]<<endl;

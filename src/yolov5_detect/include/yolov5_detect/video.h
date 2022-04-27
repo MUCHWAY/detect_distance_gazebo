@@ -38,7 +38,7 @@ class Ros_image {
         cv::Mat img;   
         string img_topic;
         int topic_num;
-        bool update = false;
+        int update;
         Ros_image(string &topic, const int &n);
         void img_update() ;
 };

@@ -78,6 +78,8 @@ class Detect_Grtk():
         self.camera_pose=[0,0,0,0,0,0]
         self.targets=[]
 
+        self.last_cb_time = time()
+
         def clean():
             self.cam_to_world = [0.00, 0.00 ,0.00]
             self.cam_to_world_2 = [0.00,0.00,0.00] 
@@ -134,6 +136,10 @@ class Detect_Grtk():
         self.car_pos = [msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z]
 
     def yolov5_sub(self,data):
+        cb_now = time()
+        print('cb_rate: ', 1/(cb_now - self.last_cb_time))
+        self.last_cb_time = cb_now
+        
         if data:
             timestamp=int(round(time() * 1000))
 

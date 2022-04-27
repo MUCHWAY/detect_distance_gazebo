@@ -17,7 +17,7 @@
 #include "opencv2/video/tracking.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
-
+#include <unistd.h>
 #include <thread>
 #include <mutex>
 #include <vector>
@@ -80,6 +80,9 @@ int main(int argc, char** argv) {
     Ros_image ros_img(img_topic, num);
     thread ros_img_thread(&Ros_image::img_update, &ros_img); //传递初始函数作为线程的参数
 
+    // Img_update img_update(video_name);
+    // thread img_update_thread(&Img_update::update, &img_update);//传递初始函数作为线程的参数
+
     cudaSetDevice(DEVICE);
 
     // deserialize the .engine and run inference
@@ -133,10 +136,12 @@ int main(int argc, char** argv) {
     // prepare input data cache in device memory
     CUDA_CHECK(cudaMalloc((void**)&img_device, MAX_IMAGE_INPUT_SIZE_THRESH * 3));
         
-    cv::namedWindow("Display");
-    cv::VideoWriter outputVideo;
-    outputVideo.open("detect.avi",  cv::VideoWriter::fourcc('M', 'P', '4', '2'), 10.0, cv::Size(1920, 1080));
-    bool write = false;
+    // cv::namedWindow("Display");
+    // cv::VideoWriter outputVideo;
+    // outputVideo.open("detect.avi",  cv::VideoWriter::fourcc('M', 'P', '4', '2'), 10.0, cv::Size(1920, 1080));
+    // bool write = false;
+
+
     cv::Mat raw_img ;
     cv::Mat img;
     cv::Mat final;
@@ -154,20 +159,23 @@ int main(int argc, char** argv) {
     std::vector<Yolo::Detection> final_res;
     std::string class_[1]={"car"};
 
-    ros::Rate loop_rate(10.0);
+    auto end = chrono::system_clock::now();
 
     while(ros::ok()) 
     {
-        auto start = std::chrono::system_clock::now();
+        auto start = chrono::system_clock::now();
 
         // if(img_update.img_flag==0) break;
+        // raw_img=img_update.get_img();
 
-        if(ros_img.update) {
+        if(ros_img.update < 20) {
             raw_img = ros_img.img.clone();
-            ros_img.update = false;
+            ros_img.update ++;
+            if(ros_img.update > 30) ros_img.update = 30;
         }
         else {
-            loop_rate.sleep();
+            cout<<"Image not updated!!!"<<endl;
+            usleep(1000 * 50);
             continue;
         }
         
@@ -210,31 +218,29 @@ int main(int argc, char** argv) {
                 }
             }
         }
+
         final_res.clear();
         nms(final_res, result_sum, CONF_THRESH, NMS_THRESH); 
 
         if(final_res.size()!=0){
             for (size_t m = 0 ; m < final_res.size(); m++) {
-
                 dr.target_location.x = (unsigned int)final_res[m].bbox[0];
                 dr.target_location.y = (unsigned int)final_res[m].bbox[1];
                 dr.target_location.width = (int)final_res[m].bbox[2];
                 dr.target_location.height = (int)final_res[m].bbox[3];
                 dr.target_location_confidence = final_res[m].conf;
                 dr.target_name = class_[(int)final_res[m].class_id];
-
                 detect_result.push_back(dr);
             }
         }
 
         track_result = sort_track.tracking(detect_result);
-        
         if(track_result.size() != 0) {
             for(TrackingBox t : track_result) {
-                cout<<t.box.x<<" "<<t.box.y<<" "<<t.box.width<<' '<<t.box.height<<endl;
-                cout<<t.confidence<<endl;
-                cout<<t.id<<endl;
-                cout<<t.target_name<<endl;
+                // cout<<t.box.x<<" "<<t.box.y<<" "<<t.box.width<<' '<<t.box.height<<endl;
+                // cout<<t.confidence<<endl;
+                // cout<<t.id<<endl;
+                // cout<<t.target_name<<endl;
 
                 detect_msg.num.push_back((int8_t)t.id);
                 detect_msg.class_name.push_back(t.target_name);
@@ -245,19 +251,20 @@ int main(int argc, char** argv) {
                 detect_msg.size_y.push_back((int16_t)t.box.height);
 
                 // 在图上画出跟踪结果
-                if(t.confidence != 0) {
-                    cv::Rect r( (int)(t.box.x - t.box.width/2), (int)(t.box.y - t.box.height/2),(int)t.box.width,(int)t.box.height);
-                    cv::rectangle(raw_img, r, cv::Scalar(0x27, 0xC1, 0x36), 2);
-                    cv::putText(raw_img, t.target_name, cv::Point(r.x, r.y - 1), cv::FONT_HERSHEY_PLAIN, 1.2, cv::Scalar(0, 0, 255), 2);
-                    cv::putText(raw_img, std::to_string(t.confidence).substr(0,4), cv::Point(r.x+40, r.y - 1), cv::FONT_HERSHEY_PLAIN, 1.2, cv::Scalar(0, 0, 255), 2);
-                    cv::putText(raw_img, std::to_string(t.id), cv::Point(r.x+100, r.y), cv::FONT_HERSHEY_PLAIN, 1.2, cv::Scalar(0, 0, 255), 2);
-                    cv::circle(raw_img, cv::Point((int)t.box.x, (int)t.box.y), 3, cv::Scalar(0, 0, 255), - 1);
-                }  
+                // if(t.confidence != 0) {
+                //     cv::Rect r( (int)(t.box.x - t.box.width/2), (int)(t.box.y - t.box.height/2),(int)t.box.width,(int)t.box.height);
+                //     cv::rectangle(raw_img, r, cv::Scalar(0x27, 0xC1, 0x36), 2);
+                //     cv::putText(raw_img, t.target_name, cv::Point(r.x, r.y - 1), cv::FONT_HERSHEY_PLAIN, 1.2, cv::Scalar(0, 0, 255), 2);
+                //     cv::putText(raw_img, std::to_string(t.confidence).substr(0,4), cv::Point(r.x+40, r.y - 1), cv::FONT_HERSHEY_PLAIN, 1.2, cv::Scalar(0, 0, 255), 2);
+                //     cv::putText(raw_img, std::to_string(t.id), cv::Point(r.x+100, r.y), cv::FONT_HERSHEY_PLAIN, 1.2, cv::Scalar(0, 0, 255), 2);
+                //     cv::circle(raw_img, cv::Point((int)t.box.x, (int)t.box.y), 3, cv::Scalar(0, 0, 255), - 1);
+                // }  
             }
+
         }
 
-        cv::line(raw_img, cv::Point(1920, raw_img.rows), cv::Point(1920, 0), cv::Scalar(0, 0, 255), 2, 4);
-        cv::line(raw_img, cv::Point(raw_img.cols,1080), cv::Point(0,1080), cv::Scalar(0, 0, 255), 2, 4);
+        // cv::line(raw_img, cv::Point(1920, raw_img.rows), cv::Point(1920, 0), cv::Scalar(0, 0, 255), 2, 4);
+        // cv::line(raw_img, cv::Point(raw_img.cols,1080), cv::Point(0,1080), cv::Scalar(0, 0, 255), 2, 4);
 
         detect_pub.publish(detect_msg);
         detect_result.clear();
@@ -271,25 +278,24 @@ int main(int argc, char** argv) {
         detect_msg.size_x.clear();
         detect_msg.size_y.clear(); 
 
-        cv::resize(raw_img, final, cv::Size(1920,1080));
+        // cv::resize(raw_img, final, cv::Size(1920,1080));
         // cv::imshow("Display", final);
-        int k = cv::waitKey(1); 
-        static int num = 0;
-        if(k == 115)  {
-            write = true;
-            cv::imwrite(to_string(num)+".jpg", raw_img);
-            num ++;
-        }
+        // int k = cv::waitKey(1); 
+        // static int num = 0;
+        // if(k == 115)  {
+        //     write = true;
+        //     cv::imwrite(to_string(num)+".jpg", raw_img);
+        //     num ++;
+        // }
+        // if(write) cout<<write<<endl, outputVideo.write(img);
 
-        if(write) cout<<write<<endl, outputVideo.write(img);
-
-        auto end = std::chrono::system_clock::now();
-        std::cout << "sum: " <<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< "ms  "<<endl;
+        end = chrono::system_clock::now();
+        cout << "sum_time: " <<chrono::duration_cast<chrono::milliseconds>(end - start).count()<< "ms  "<<endl;
         cout<<"--------------------------------"<<endl;
     }
 
-    cv::destroyWindow("Display");
-    outputVideo.release();
+    // cv::destroyWindow("Display");
+    // outputVideo.release();
 
     // Release stream and buffers
     cudaStreamDestroy(stream);
