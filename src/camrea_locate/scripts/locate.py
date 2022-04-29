@@ -58,7 +58,7 @@ class Watchdog():
         self.isFeed=True
 
 class Detect_Grtk():
-    def __init__(self,ID):
+    def __init__(self,ID,data_save_path):
         # t = threading.Thread(target = self.sub_thread)
         # t.daemon = True
         # t.start()
@@ -78,8 +78,6 @@ class Detect_Grtk():
         self.camera_pose=[0,0,0,0,0,0]
         self.targets=[]
 
-        self.last_cb_time = time()
-
         def clean():
             self.cam_to_world = [0.00, 0.00 ,0.00]
             self.cam_to_world_2 = [0.00,0.00,0.00] 
@@ -98,7 +96,7 @@ class Detect_Grtk():
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.dest_addr = ('192.168.3.255', 5000)
 
-        self.f=open('/home/nvidia/Develop_Project/detect_distance_gazebo/src/camrea_locate/data/dis_data.txt','w+')
+        self.f=open(data_save_path + 'data_uav'+str(ID)+'.txt','w+')
         self.f.write("uav_pos.e"  + " " + "uav_pos.n"  + " " + "uav_pos.u"  + " " + 
                      "new_det.u"      + " " + "new_det.v"      + " " + 
                      "cam_to_world.e" + " " + "cam_to_world.n" + " " + "cam_to_world.u" + " " + 
@@ -136,10 +134,6 @@ class Detect_Grtk():
         self.car_pos = [msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z]
 
     def yolov5_sub(self,data):
-        cb_now = time()
-        print('cb_rate: ', 1/(cb_now - self.last_cb_time))
-        self.last_cb_time = cb_now
-        
         if data:
             timestamp=int(round(time() * 1000))
 
@@ -219,9 +213,10 @@ class Detect_Grtk():
         
 if __name__ == "__main__":
     rospy.init_node("locate_node", anonymous=True)
-    ID = rospy.get_param('~ID', default='1')
+    ID = rospy.get_param('~ID')
+    data_save_path = rospy.get_param('~data_save_path')
 
-    detect_grtk=Detect_Grtk(ID)
+    detect_grtk=Detect_Grtk(ID, data_save_path)
     detect_grtk.sub()
 
     udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

@@ -1,0 +1,15 @@
+<launch>
+    <!-- <group ns="uav1"> -->
+        <node pkg="yolov5_detect" type="yolov5_detect_fly" name="yolov5_detect_node" output="screen">
+            <param name="node_num" type = "string" value = "uav1"/>
+            <param name="engine_name" type = "string" value = "$(find yolov5_detect)/weights/1226_n_best.engine"/>	
+            <param name="video_name" type = "string" value = "$(find yolov5_detect)/detect/test_vedio/DJI_0668-4k.MP4"/> 
+            <!-- <param name="video_name" type = "string" value = "rtsp://admin:admin@192.168.42.108:554/cam/realmonitor?channel=1&amp;subtype=0"/>  -->
+            <param name="img_topic" type = "string" value = "prometheus/sensor/monocular_down/image_raw"/> 
+            <rosparam param="img_list">[4016, 2160, 4, 2, 90, 50]</rosparam>
+            <param name="video_out_path" type = "string" value = "$(find yolov5_detect)/detect/"/> 
+        </node>
+    <!-- </group> -->
+</launch>
+
+

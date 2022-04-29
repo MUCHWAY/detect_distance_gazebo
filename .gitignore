@@ -1,3 +1,4 @@
 /build
 /devel
 /src/yolov5_detect/detect
+/src/yolov5_detect/weight

@@ -1,9 +1,8 @@
 # include "yolov5_detect/video.h"
 std::mutex m;
 
-Ros_image::Ros_image(string &topic, const int &n) {
+Ros_image::Ros_image(string &topic) {
     img_topic = topic;
-    topic_num = n;
     update = 30;
 }
 
@@ -72,17 +71,17 @@ void Img_update::undistortPoints(std::vector<cv::Point2f>& points)
     cv::undistortPoints(points, points, mtx, dist, cv::Mat(), newcameramtx);
 }
 
-Img_split_focus::Img_split_focus(int width, int height){
+Img_split_focus::Img_split_focus(const vector<int> &img_vec){
 
-    img_size[0] = width; img_size[1] = height;
+    img_size[0] = img_vec[0]; img_size[1] = img_vec[1];
 
     split_size[0]=1024;split_size[1]=1024;
     focus_size[0]=1024;focus_size[1]=1024;
 
     // x_num=(int)(img_size[0]/split_size[0])+1;
     // y_num=(int)(img_size[1]/split_size[1])+1;
-    x_num = 2;
-    y_num = 1;
+    x_num = img_vec[2];
+    y_num = img_vec[3];
 
     cout<<"x_num: "<<x_num<<endl;
     cout<<"y_num: "<<y_num<<endl;
@@ -106,7 +105,7 @@ Img_split_focus::Img_split_focus(int width, int height){
     // // overlap[1]=(float)(split_size[1]-split_y[1])/split_size[1];
     // cout<<"overlap_x: "<<abs(overlap[0])<<" overlap_y:"<<abs(overlap[1])<<endl;
 
-    overlap[0] = 128; overlap[1] = 50;
+    overlap[0] = img_vec[4]; overlap[1] = img_vec[5];
     for(i=1; i<x_num; i++){
         split_x.push_back(split_x[i - 1] + split_size[0] - overlap[0]);
         cout<<split_x[i]<<endl;

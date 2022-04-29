@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
     // Img_update img_update(video_name);
     // thread img_update_thread(&Img_update::update, &img_update);//传递初始函数作为线程的参数
 
-    Ros_image ros_img(img_topic);
+    Ros_image ros_img(img_topic, num);
     thread ros_img_thread(&Ros_image::img_update, &ros_img); //传递初始函数作为线程的参数
 
     cudaSetDevice(DEVICE);

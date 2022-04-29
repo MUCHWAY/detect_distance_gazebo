@@ -7,6 +7,7 @@ project(yolov5_detect)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+set(OpenCV_DIR /usr/lib/aarch64-linux-gnu/cmake/opencv4) 
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   message_generation
@@ -89,17 +90,25 @@ target_link_libraries(myplugins nvinfer cudart)
 # find_package(OpenCV)
 # include_directories(${OpenCV_INCLUDE_DIRS})
 
+cuda_add_executable(yolov5_detect_gazebo src/calibrator.cpp src/yolov5_detect_gazebo.cpp src/preprocess.cu src/video.cpp)
+cuda_add_executable(yolov5_detect_fly src/calibrator.cpp src/yolov5_detect_fly.cpp src/preprocess.cu src/video.cpp)
+
 add_library(sort src/sort.cpp src/Hungarian.cpp src/KalmanTracker.cpp)
-
-cuda_add_executable(yolov5_detect src/calibrator.cpp src/yolov5_detect_1920.cpp src/preprocess.cu src/video.cpp)
-
-target_link_libraries(yolov5_detect nvinfer)
-target_link_libraries(yolov5_detect cudart)
-target_link_libraries(yolov5_detect myplugins)
-target_link_libraries(yolov5_detect ${OpenCV_LIBS})
-target_link_libraries(yolov5_detect ${catkin_LIBRARIES})
 target_link_libraries(sort ${OpenCV_LIBS})
-target_link_libraries(yolov5_detect sort)
+
+target_link_libraries(yolov5_detect_gazebo nvinfer)
+target_link_libraries(yolov5_detect_gazebo cudart)
+target_link_libraries(yolov5_detect_gazebo myplugins)
+target_link_libraries(yolov5_detect_gazebo ${OpenCV_LIBS})
+target_link_libraries(yolov5_detect_gazebo ${catkin_LIBRARIES})
+target_link_libraries(yolov5_detect_gazebo sort)
+
+target_link_libraries(yolov5_detect_fly nvinfer)
+target_link_libraries(yolov5_detect_fly cudart)
+target_link_libraries(yolov5_detect_fly myplugins)
+target_link_libraries(yolov5_detect_fly ${OpenCV_LIBS})
+target_link_libraries(yolov5_detect_fly ${catkin_LIBRARIES})
+target_link_libraries(yolov5_detect_fly sort)
 
 if(UNIX)
 add_definitions(-O2 -pthread)

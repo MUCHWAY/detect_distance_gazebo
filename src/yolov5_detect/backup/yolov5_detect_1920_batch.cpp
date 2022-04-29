@@ -17,7 +17,7 @@
 #include "opencv2/video/tracking.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
-#include <unistd.h>
+
 #include <thread>
 #include <mutex>
 #include <vector>
@@ -31,7 +31,7 @@ using namespace cv;
 #define DEVICE 0  // GPU id
 #define NMS_THRESH 0.4
 #define CONF_THRESH 0.5
-#define BATCH_SIZE 1
+#define BATCH_SIZE 2
 #define MAX_IMAGE_INPUT_SIZE_THRESH 3000 * 3000 // ensure it exceed the maximum size in the input images ! 
 
 // stuff we know about the network and the input/output blobs
@@ -61,6 +61,9 @@ int main(int argc, char** argv) {
 
     ros::Publisher detect_pub = nh.advertise<yolov5_detect::detect>(node_name + "/detect", 1000);
 
+    std::string node_num;
+    ros::param::get("~node_num", node_num);
+
     std::string engine_name;
     ros::param::get("~engine_name", engine_name);
 
@@ -73,11 +76,7 @@ int main(int argc, char** argv) {
     std::string img_topic;
     ros::param::get("~img_topic", img_topic);
 
-    std::string uav_num;
-    ros::param::get("~uav_num", uav_num);
-    int num = 1;
-
-    Ros_image ros_img(img_topic, num);
+    Ros_image ros_img(img_topic);
     thread ros_img_thread(&Ros_image::img_update, &ros_img); //传递初始函数作为线程的参数
 
     // Img_update img_update(video_name);
@@ -137,11 +136,9 @@ int main(int argc, char** argv) {
     CUDA_CHECK(cudaMalloc((void**)&img_device, MAX_IMAGE_INPUT_SIZE_THRESH * 3));
         
     // cv::namedWindow("Display");
-    // cv::VideoWriter outputVideo;
-    // outputVideo.open("detect.avi",  cv::VideoWriter::fourcc('M', 'P', '4', '2'), 10.0, cv::Size(1920, 1080));
-    // bool write = false;
-
-
+    cv::VideoWriter outputVideo;
+    outputVideo.open(video_out_path + "detect.avi",  cv::VideoWriter::fourcc('M', 'P', '4', '2'), 10.0, cv::Size(1920, 1080));
+    bool write = false;
     cv::Mat raw_img ;
     cv::Mat img;
     cv::Mat final;
@@ -159,11 +156,11 @@ int main(int argc, char** argv) {
     std::vector<Yolo::Detection> final_res;
     std::string class_[1]={"car"};
 
-    auto end = chrono::system_clock::now();
+    ros::Rate loop_rate(10.0);
 
     while(ros::ok()) 
     {
-        auto start = chrono::system_clock::now();
+        auto start = std::chrono::system_clock::now();
 
         // if(img_update.img_flag==0) break;
         // raw_img=img_update.get_img();
@@ -181,12 +178,13 @@ int main(int argc, char** argv) {
         
         memset(result_sum, 0, sizeof(result_sum));
         sum_index=1;
+
+        float* buffer_idx = (float*)buffers[inputIndex];
         for(int i=0;i<split_focus.y_num;i++){
             for(int j=0;j<split_focus.x_num;j++){
                 cv::Rect rect( split_focus.split_x[j], split_focus.split_y[i], split_focus.split_size[0], split_focus.split_size[1] );
                 img = raw_img(rect).clone(); //裁切小图
 
-                float* buffer_idx = (float*)buffers[inputIndex];
                 size_t  size_image = img.cols * img.rows * 3;
                 size_t  size_image_dst = INPUT_H * INPUT_W * 3;
                 // --------------------------------------------------------------------------------------------21ms
@@ -198,13 +196,19 @@ int main(int argc, char** argv) {
                 // --------------------------------------------------------------------------------------------23ms
                 preprocess_kernel_img(img_device, img.cols, img.rows, buffer_idx, INPUT_W, INPUT_H, stream);   
                 // --------------------------------------------------------------------------------------------23ms
-                buffer_idx += size_image_dst;
-                // Run inference
-                doInference(*context, stream, (void**)buffers, prob, BATCH_SIZE); //time：20ms
-                // --------------------------------------------------------------------------------------------42ms
+                buffer_idx += size_image_dst; 
+            }
+        }
+
+        // Run inference
+        doInference(*context, stream, (void**)buffers, prob, BATCH_SIZE); //time：20ms
+        // --------------------------------------------------------------------------------------------42ms
+        
+        int b = 0;
+        for(int i=0;i<split_focus.y_num;i++){
+            for(int j=0;j<split_focus.x_num;j++){
                 res.clear();
-                nms(res, prob, CONF_THRESH, NMS_THRESH);   
-                // --------------------------------------------------------------------------------------------43ms
+                nms(res, &prob[b * OUTPUT_SIZE], CONF_THRESH, NMS_THRESH);
                 if(res.size()!=0){
                     for (size_t m = 0; m < res.size(); m++) {
                         result_sum[sum_index++] = res[m].bbox[0]  + split_focus.split_x[j];
@@ -216,6 +220,7 @@ int main(int argc, char** argv) {
                         result_sum[0]+= res.size();
                     }
                 }
+                b ++;
             }
         }
 
@@ -230,11 +235,13 @@ int main(int argc, char** argv) {
                 dr.target_location.height = (int)final_res[m].bbox[3];
                 dr.target_location_confidence = final_res[m].conf;
                 dr.target_name = class_[(int)final_res[m].class_id];
+
                 detect_result.push_back(dr);
             }
         }
 
         track_result = sort_track.tracking(detect_result);
+        
         if(track_result.size() != 0) {
             for(TrackingBox t : track_result) {
                 // cout<<t.box.x<<" "<<t.box.y<<" "<<t.box.width<<' '<<t.box.height<<endl;
@@ -260,7 +267,6 @@ int main(int argc, char** argv) {
                 //     cv::circle(raw_img, cv::Point((int)t.box.x, (int)t.box.y), 3, cv::Scalar(0, 0, 255), - 1);
                 // }  
             }
-
         }
 
         // cv::line(raw_img, cv::Point(1920, raw_img.rows), cv::Point(1920, 0), cv::Scalar(0, 0, 255), 2, 4);
@@ -287,10 +293,11 @@ int main(int argc, char** argv) {
         //     cv::imwrite(to_string(num)+".jpg", raw_img);
         //     num ++;
         // }
+
         // if(write) cout<<write<<endl, outputVideo.write(img);
 
-        end = chrono::system_clock::now();
-        cout << "sum_time: " <<chrono::duration_cast<chrono::milliseconds>(end - start).count()<< "ms  "<<endl;
+        auto end = chrono::system_clock::now();
+        cout <<node_num + "_sum_time: "<<chrono::duration_cast<chrono::milliseconds>(end - start).count()<< "ms  "<<endl;
         cout<<"--------------------------------"<<endl;
     }
 

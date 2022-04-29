@@ -1,0 +1,28 @@
+<launch>
+    <group ns="uav1">
+        <node pkg="yolov5_detect" type="yolov5_detect_gazebo" name="yolov5_detect_node" output="screen">
+            <param name="is_fly" type = "bool" value = "false"/>
+            <param name="node_num" type = "string" value = "uav1"/>
+            <param name="engine_name" type = "string" value = "$(find yolov5_detect)/weights/0410best_s.engine"/>	
+            <param name="video_name" type = "string" value = "$(find yolov5_detect)/detect/test_vedio/DJI_0668-4k.MP4"/> 
+            <param name="img_topic" type = "string" value = "prometheus/sensor/monocular_down/image_raw"/> 
+            <rosparam param="img_list">[1920, 1080, 2, 1, 128, 50]</rosparam>
+            <param name="video_out_path" type = "string" value = "$(find yolov5_detect)/detect/"/> 
+        </node>
+    </group>
+
+<!-- 
+    <group ns="uav2">
+        <node pkg="yolov5_detect" type="yolov5_detect" name="yolov5_detect_node" output="screen">
+            <param name="is_fly" type = "bool" value = "false"/>
+            <param name="node_num" type = "string" value = "uav2"/>
+            <param name="engine_name" type = "string" value = "$(find yolov5_detect)/weights/0410best_s.engine"/>	
+            <param name="video_name"  type = "string" value = "$(find yolov5_detect)/detect/test_vedio/DJI_0654.MP4"/> 
+            <param name="img_topic" type = "string" value = "prometheus/sensor/monocular_down/image_raw"/> 
+            <param name="video_out_path" type = "string" value = "$(find yolov5_detect)/detect/"/> 
+        </node>
+    </group> -->
+
+</launch>
+
+

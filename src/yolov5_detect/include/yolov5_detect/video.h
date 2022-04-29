@@ -37,9 +37,8 @@ class Ros_image {
     public:
         cv::Mat img;   
         string img_topic;
-        int topic_num;
         int update;
-        Ros_image(string &topic, const int &n);
+        Ros_image(string &topic);
         void img_update() ;
 };
 
@@ -76,7 +75,7 @@ class Img_split_focus{
         int x_num;
         int y_num;
         float overlap[2];
-        Img_split_focus(int width, int height);
+        Img_split_focus(const vector<int> &img_vec);
 };
 
 #endif
