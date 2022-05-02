@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
+print('fdf')
 from numpy import save
 import rospy
 import math
