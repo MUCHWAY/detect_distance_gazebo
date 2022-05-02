@@ -1,0 +1,8 @@
+<launch>
+    <!-- <group ns="uav1"> -->
+        <node pkg="camrea_locate" type="locate.py" name="locate_node" output="screen">
+            <param name="ID" value = "1"/>	
+            <param name="data_save_path" value = "$(find camrea_locate)/data/"/> 
+        </node>
+    <!-- </group> -->
+</launch>

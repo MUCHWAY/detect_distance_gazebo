@@ -1,4 +1,4 @@
 /build
 /devel
+/src/camera_locate/data
 /src/yolov5_detect/detect
-/src/yolov5_detect/weight

@@ -18,7 +18,7 @@ from nav_msgs.msg import *
 from sensor_msgs.msg import *
 
 from yolov5_detect.msg import detect
-from camrea_locate.msg import DroneState
+from camera_locate.msg import DroneState
 
 from cam_pos import *
 
@@ -117,7 +117,7 @@ class Detect_Grtk():
         rospy.Subscriber("/uav"+ str(self.id) + "/yolov5_detect_node/detect", detect , self.yolov5_sub)
         rospy.Subscriber("/uav"+ str(self.id) + "/prometheus/drone_state", DroneState , self.uav_attitude_sub)
         rospy.Subscriber("/uav"+ str(self.id) + "/mavros/local_position/pose", PoseStamped , self.local_pose_sub)
-        rospy.Subscriber("/ugv_0/odom", Odometry , self.car_gps_sub)
+        rospy.Subscriber("/ugv_3/odom", Odometry , self.car_gps_sub)
         # rospy.spin()
 
     def local_pose_sub(self,msg):
@@ -177,9 +177,9 @@ class Detect_Grtk():
     def save_send(self, new_det):
         print("{0:>8} {1:>6} {2:>6}".format("det_uv:",int(new_det[0]), int(new_det[1])))
         print("{0:>8} {1:>6} {2:>6} {3:>6}".format("uav_att:", round(self.uav_attitude[0], 2), round(self.uav_attitude[1], 2), round(self.uav_attitude[2], 2)))
-        print("{0:>8} {1:>6} {2:>6} {3:>6}".format("cam_pos:",round(self.cam_pos.camera_pos[0],2), round(self.cam_pos.camera_pos[1],2), round(self.cam_pos.camera_pos[2],2)))
+        # print("{0:>8} {1:>6} {2:>6} {3:>6}".format("cam_pos:",round(self.cam_pos.camera_pos[0],2), round(self.cam_pos.camera_pos[1],2), round(self.cam_pos.camera_pos[2],2)))
         print("{0:>8} {1:>6} {2:>6} {3:>6}".format("uav_pos:",round(self.uav_pos[0],2),round(self.uav_pos[1],2),round(self.uav_pos[2],2)))
-        print("{0:>8} {1:>6} {2:>6} {3:>6}".format("c_to_w:",round(self.cam_to_world[0],2),round(self.cam_to_world[1],2),round(self.cam_to_world[2],2)))
+        # print("{0:>8} {1:>6} {2:>6} {3:>6}".format("c_to_w:",round(self.cam_to_world[0],2),round(self.cam_to_world[1],2),round(self.cam_to_world[2],2)))
         print("{0:>8} {1:>6} {2:>6} {3:>6}".format("c_to_w2:",round(self.cam_to_world_2[0],2),round(self.cam_to_world_2[1],2),round(self.cam_to_world_2[2],2)))
         print("{0:>8} {1:>6} {2:>6} {3:>6}".format("car_pos:",round(self.car_pos[0],2),round(self.car_pos[1],2),round(self.car_pos[2],2)))
         print('------------------------------')
