@@ -6,6 +6,9 @@ import socket
 from nav_msgs.msg import *
 import json
 
+
+
+
 ugv_num = 2
 ugv_pos = []
 for i in range(ugv_num):
