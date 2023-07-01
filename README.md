@@ -1,0 +1,3 @@
+# detect_distance_gazebo
+yolov5+camera_distance+gazebo
+该项目基于阿木实验室的Prometheus项目，由Prometheus提供无人机集群和地面无人机仿真环境，本项目中包含yolov5用于检测地面目标，基于目标检测框大小和目标实际大小，根据相机模型和无人机状态，解算地面目标的位置。
